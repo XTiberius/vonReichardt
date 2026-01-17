@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+// Base44 removed: use local offline API (no auth redirects).
 import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
 
@@ -22,60 +21,21 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
       
-      // First, check app public settings (with token if available)
-      // This will tell us if auth is required, user not registered, etc.
-      const appClient = createAxiosClient({
-        baseURL: `/api/apps/public`,
-        headers: {
-          'X-App-Id': appParams.appId
-        },
-        token: appParams.token, // Include token if available
-        interceptResponses: true
+      // Base44 removed: skip API calls, work offline
+      // Set default public settings for offline mode
+      setAppPublicSettings({
+        id: appParams.appId,
+        public_settings: {}
       });
       
-      try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
+      // Check if user is authenticated (using localStorage token if available)
+      if (appParams.token) {
+        await checkUserAuth();
+      } else {
         setIsLoadingAuth(false);
+        setIsAuthenticated(false);
       }
+      setIsLoadingPublicSettings(false);
     } catch (error) {
       console.error('Unexpected error:', error);
       setAuthError({
@@ -89,24 +49,27 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
+      // Base44 removed: use localStorage token for offline auth
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
+      
+      // If token exists, create a mock user object for offline mode
+      if (appParams.token) {
+        const mockUser = {
+          id: 'local_user',
+          email: 'user@localhost',
+          role: 'user',
+          // Add any other user properties needed by the app
+        };
+        setUser(mockUser);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
     }
   };
 
@@ -114,18 +77,24 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
     
+    // Base44 removed: clear localStorage tokens
+    try {
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+    } catch (error) {
+      console.error('Failed to clear tokens:', error);
+    }
+    
     if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
+      // Redirect to home page
+      window.location.href = '/';
     }
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    // Base44 removed: redirect to home page instead of login
+    window.location.href = '/';
   };
 
   return (
