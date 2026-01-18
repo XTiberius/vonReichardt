@@ -35,7 +35,17 @@ jobs:
         run: npm run build
 
       - name: Ensure .nojekyll exists
-        run: touch ./dist/.nojekyll
+        run: |
+          echo "Creating .nojekyll file to disable Jekyll processing"
+          touch ./dist/.nojekyll
+          ls -la ./dist/.nojekyll || echo "Warning: .nojekyll file not created"
+
+      - name: Verify deployment files
+        run: |
+          echo "Files in dist directory:"
+          ls -la ./dist/ | head -20
+          echo "Checking for .nojekyll:"
+          test -f ./dist/.nojekyll && echo "✓ .nojekyll exists" || echo "✗ .nojekyll missing"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
