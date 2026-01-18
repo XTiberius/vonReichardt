@@ -1,0 +1,10 @@
+{
+  "name": "Von Reichardt Strategic Advisory",
+  "short_name": "Von Reichardt",
+  "description": "Strategic advisory services",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": []
+}
