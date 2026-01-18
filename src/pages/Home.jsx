@@ -42,8 +42,8 @@ const services = [
     description: "End-to-end guidance for high-growth ventures, from formation and fundraising to scaling and strategic exits."
   },
   {
-    title: "Primary & Secondary Transactions",
-    description: "Access to unique limited partnerships and strategic advisory on potential transactions across alternative asset classes."
+    title: "Primary, Secondary, OTC Transactions",
+    description: "Access to unique limited partnerships, deep liquidity networks and strategic advisory on potential transactions across alternative asset classes."
   },
   {
     title: "Strategic Advisory",
